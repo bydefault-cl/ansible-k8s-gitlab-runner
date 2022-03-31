@@ -36,3 +36,29 @@ Author Information
 ------------------
 
 An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+
+Example Use
+-----------
+
+```
+- hosts: localhost
+  remote_user: root
+  roles:
+    - ansible-k8s-gitlab-runner
+  vars:
+    namespace: "gitlab-runner"
+    gitlab_url: "https://gitlab.com/"
+    gitlab_registration_token: "123asdfasdf"
+    runner_image: "ubuntu:18.04"
+    tags: "bar,foo"
+    cache: "" # gcs,azure,s3
+    cache_shared: "true"
+    # gcs
+    gcs_credentials: ""
+
+```
+
+Test
+----
+
+```ansible-playbook tests/test.yml -i tests/inventory  --syntax-check```

@@ -1,0 +1,73 @@
+imagePullPolicy: IfNotPresent
+gitlabUrl: "{{ gitlab_url }}"
+runnerRegistrationToken: "{{ gitlab_registration_token }}"
+terminationGracePeriodSeconds: 3600
+concurrent: 10
+checkInterval: 30
+rbac:
+  create: true
+  clusterWideAccess: false
+  podSecurityPolicy:
+    enabled: false
+    resourceNames:
+    - gitlab-runner
+metrics:
+  enabled: true
+runners:
+  config: |
+    [[runners]]
+      [runners.kubernetes]
+        image = "{{ runner_image }}"
+{% if cache == 'gcs' %}
+        [runners.cache]
+          Type = "gcs"
+          Path = "runner"
+          Shared = true
+          [runners.cache.gcs]
+            BucketName = "gitlab-runner-cache"
+  cache:
+    secretName: google-application-credentials
+{% elif cache == 'azure' %}
+        [runners.cache]
+          Type = "azure"
+          Path = "runner"
+          Shared = {{ cache_shared }}
+          [runners.cache.azure]
+            ContainerName = "gitlab-runner-cache"
+            StorageDomain = "blob.core.windows.net"
+  cache:
+      secretName: azureaccess
+{% elif cache == 's3' %}
+        [runners.cache]
+          Type = "s3"
+          Path = "runner"
+          Shared = {{ cache_shared }}
+          [runners.cache.s3]
+            ServerAddress = "s3.amazonaws.com"
+            BucketName = "gitlab-runner-cache"
+            BucketLocation = "{{ s3_bucketlocation }}"
+            Insecure = false
+            AuthenticationType = "access-key"
+  cache:
+      secretName: s3access
+{% else %}
+  cache: {}
+{% endif %}
+  tags: "{{ tags }}"
+  runUntagged: "{{ run_untagged }}"
+  privileged: "{{ privileged }}"
+  builds: {}
+  services: {}
+  helpers: {}
+securityContext:
+  runAsUser: 100
+  fsGroup: 65533
+resources: {}
+affinity: {}
+nodeSelector: {}
+tolerations: []
+hostAliases: []
+podAnnotations: {}
+podLabels: {}
+secrets: []
+configMaps: {}

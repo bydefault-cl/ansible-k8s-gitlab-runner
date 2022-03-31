@@ -1,0 +1,22 @@
+---
+# defaults file for ansible-k8s-gitlab-runner
+namespace: "default"
+gitlab_url: "https://gitlab.com/"
+gitlab_registration_token: "qwerty123456"
+runner_image: "ubuntu:16.04"
+tags: "foo"
+run_untagged: true
+privileged: false
+cache: "" # gcs,azure,s3
+cache_shared: true
+# gcs
+# gcs_access_id: ""
+# gcs_private_key: ""
+gcs_credentials: "" # "{{ lookup('env', 'GOOGLE_APPLICATION_CREDENTIALS') }}"
+# azure
+azure_account_name: ""
+azure_account_key: ""
+# s3
+s3_accesskey: ""
+s3_secretkey: ""
+s3_bucketlocation: "us-east-1"

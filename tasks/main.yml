@@ -1,0 +1,79 @@
+---
+# tasks file for ansible-k8s-gitlab-runner
+- name: Install Python packages.
+  pip:
+    name: "{{ packages }}"
+  vars:
+    packages:
+      - PyYAML
+      - jsonpatch
+      - kubernetes
+      - openshift
+    state: present
+
+- name: Create gitlab-runner namespace
+  kubernetes.core.k8s:
+    name: "{{ namespace }}"
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Create GCS Access Secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: google-application-credentials
+        namespace: "{{ namespace }}"
+      # type: Opaque
+      data:
+        credentials.json: "{{ gcs_credentials }}"
+  when: cache == "gcs"
+
+- name: Create Azure Access Secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: azureaccess
+        namespace: "{{ namespace }}"
+      # type: Opaque
+      data:
+        azure_account_name: "{{ azure_account_name }}"
+        azure_account_key: "{{ azure_account_key }}"
+  when: cache == "azure"
+
+- name: Create S3 Access Secret
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: s3access
+        namespace: "{{ namespace }}"
+      # type: Opaque
+      data:
+        accesskey: "{{ s3_accesskey }}"
+        secretkey: "{{ s3_secretkey }}"
+  when: cache == "s3"
+
+- name: Add gitlab-runner repo
+  kubernetes.core.helm_repository:
+    name: gitlab
+    repo_url: "https://charts.gitlab.io"
+  # ignore_errors: yes
+  register: helm_repo_result
+  failed_when: helm_repo_result.msg == 0 or "Repository already have a repository named gitlab" not in helm_repo_result.msg
+  # changed_when: "helm_repo_result.rc != 2"
+
+- name: Deploy gitlab-runner
+  kubernetes.core.helm:
+    name: gitlab-runner
+    chart_ref: gitlab/gitlab-runner
+    release_namespace: "{{ namespace }}"
+    values: "{{ lookup('template', 'gitlab-runner-values.yml.j2') | from_yaml }}"
