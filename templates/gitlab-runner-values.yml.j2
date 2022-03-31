@@ -22,7 +22,7 @@ runners:
         [runners.cache]
           Type = "gcs"
           Path = "runner"
-          Shared = true
+          Shared = {{ cache_shared }}
           [runners.cache.gcs]
             BucketName = "gitlab-runner-cache"
   cache:
